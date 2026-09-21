@@ -1,4 +1,4 @@
-FROM ngnix
+FROM Nginx
 EXPOSE 80
 MAINTAINER sasi
 LABEL this my movie ticket booking
