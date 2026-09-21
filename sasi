@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineVerse - Ultra Cinema Experience & Ticket Booking</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              amber: '#f59e0b',
+              glow: '#fbbf24',
+              violet: '#8b5cf6',
+              neon: '#a855f7',
+              dark: '#0a0a0f',
+              card: '#12121c',
+              elevated: '#1a1a2b',
+              border: '#2a2a40'
+            }
+          },
+          boxShadow: {
+            'glow-amber': '0 0 25px -5px rgba(245, 158, 11, 0.45)',
+            'glow-violet': '0 0 25px -5px rgba(139, 92, 246, 0.45)',
+            'screen-glow': '0 15px 45px rgba(245, 158, 11, 0.35)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a0f;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #272738;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3f3f58;
+    }
+
+    /* Screen Curvature */
+    .theater-screen-arc {
+      border-radius: 50% / 100% 100% 0 0;
+      transform: perspective(600px) rotateX(-20deg);
+    }
+
+    /* Perforated ticket edge style */
+    .ticket-rip-left {
+      position: relative;
+    }
+    .ticket-rip-left::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      background-color: #0a0a0f;
+      border-radius: 50%;
+      z-index: 20;
+    }
+    .ticket-rip-right {
+      position: relative;
+    }
+    .ticket-rip-right::after {
+      content: '';
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      background-color: #0a0a0f;
+      border-radius: 50%;
+      z-index: 20;
+    }
+
+    /* Pulse animation for active neon effects */
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.4)); }
+      50% { opacity: 1; filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.7)); }
+    }
+    .neon-pulse {
+      animation: subtlePulse 3s infinite ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="bg-brand-dark text-slate-100 font-sans min-h-screen selection:bg-brand-amber selection:text-black relative overflow-x-hidden">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-brand-dark/85 border-b border-brand-border/60 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="scrollToCatalog()">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-brand-violet to-fuchsia-500 p-0.5 shadow-glow-amber">
+          <div class="w-full h-full bg-brand-dark rounded-[10px] flex items-center justify-center">
+            <i data-lucide="clapperboard" class="w-5 h-5 text-brand-amber"></i>
+          </div>
+        </div>
+        <div>
+          <span class="font-display font-extrabold text-2xl tracking-tight bg-gradient-to-r from-amber-400 via-amber-200 to-purple-300 bg-clip-text text-transparent">
+            Cine<span class="text-brand-amber">Verse</span>
+          </span>
+          <span class="hidden sm:inline-block text-[10px] tracking-widest uppercase font-semibold text-slate-400 ml-1.5 px-1.5 py-0.5 bg-slate-800/80 rounded border border-slate-700">IMAX 4K</span>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="flex-1 max-w-md hidden md:block">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          <input 
+            type="text" 
+            id="searchInput"
+            placeholder="Search movies, actors, genres..."
+            class="w-full pl-10 pr-4 py-2 text-sm bg-brand-card/90 border border-brand-border rounded-full text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-amber/70 focus:ring-1 focus:ring-brand-amber transition"
+            onkeyup="filterMovies()"
+          />
+        </div>
+      </div>
+
+      <!-- Location & User Action Controls -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <!-- City Selector -->
+        <div class="relative flex items-center bg-brand-card border border-brand-border rounded-full px-3 py-1.5 text-xs text-slate-300">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-amber mr-1.5"></i>
+          <select id="citySelect" class="bg-transparent text-slate-200 focus:outline-none cursor-pointer pr-2 font-medium">
+            <option value="New York" class="bg-brand-card text-white">New York (Lincoln Sq)</option>
+            <option value="Los Angeles" class="bg-brand-card text-white">Los Angeles (Universal)</option>
+            <option value="London" class="bg-brand-card text-white">London (BFI IMAX)</option>
+            <option value="Tokyo" class="bg-brand-card text-white">Tokyo (Shinjuku)</option>
+          </select>
+        </div>
+
+        <!-- History / Tickets Drawer Trigger -->
+        <button 
+          onclick="toggleTicketsDrawer(true)" 
+          class="relative flex items-center justify-center p-2 rounded-full bg-brand-card hover:bg-brand-elevated border border-brand-border transition group"
+          title="My Bookings"
+        >
+          <i data-lucide="ticket" class="w-4 h-4 text-slate-300 group-hover:text-brand-amber transition"></i>
+          <span id="ticketBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-brand-amber text-black text-[10px] font-bold rounded-full flex items-center justify-center">0</span>
+        </button>
+
+        <!-- Profile Mock -->
+        <div class="flex items-center gap-2 pl-2 border-l border-brand-border">
+          <img 
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" 
+            alt="User avatar" 
+            class="w-8 h-8 rounded-full ring-2 ring-brand-amber/50 object-cover"
+            onerror="this.src='https://placehold.co/100x100/222/fff?text=CV'"
+          />
+          <span class="hidden lg:block text-xs font-medium text-slate-300">Alex Carter</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden pt-4 pb-12 sm:py-16">
+    <!-- Ambient backdrops -->
+    <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[450px] bg-gradient-to-b from-brand-amber/15 via-purple-600/10 to-transparent blur-3xl pointer-events-none -z-10"></div>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div id="heroCard" class="relative rounded-3xl overflow-hidden border border-brand-border bg-gradient-to-r from-brand-card via-brand-dark/95 to-brand-card p-6 sm:p-10 lg:p-12 shadow-2xl min-h-[460px] flex flex-col justify-end">
+        
+        <!-- Hero Movie Background Banner Image -->
+        <div class="absolute inset-0 z-0">
+          <img 
+            id="heroBackdrop"
+            src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop&q=80" 
+            alt="Cinematic Banner" 
+            class="w-full h-full object-cover object-center opacity-30 filter brightness-90 transition duration-700"
+            onerror="this.src='https://placehold.co/1600x900/111/444?text=CineVerse+Cinema'"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/70 to-transparent"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-brand-dark via-transparent to-brand-dark/50"></div>
+        </div>
+
+        <!-- Hero Content Info -->
+        <div class="relative z-10 max-w-2xl space-y-4">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <span class="px-3 py-1 text-xs font-extrabold uppercase tracking-wider bg-brand-amber text-black rounded-full shadow-glow-amber">
+              Featured Premiere
+            </span>
+            <span class="px-2.5 py-1 text-xs font-semibold bg-white/10 text-white backdrop-blur-md rounded-md flex items-center gap-1 border border-white/15">
+              <i data-lucide="star" class="w-3.5 h-3.5 text-brand-amber fill-brand-amber"></i> 8.9 IMDb
+            </span>
+            <span class="px-2.5 py-1 text-xs text-slate-300 bg-slate-800/80 rounded-md border border-slate-700">
+              PG-13 • 2h 46m
+            </span>
+            <span class="px-2.5 py-1 text-xs font-medium text-purple-300 bg-purple-950/60 border border-purple-800/60 rounded-md">
+              IMAX 70MM Laser
+            </span>
+          </div>
+
+          <h1 id="heroTitle" class="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-white tracking-tight leading-tight">
+            Interstellar Odyssey: Beyond Time
+          </h1>
+
+          <p id="heroSynopsis" class="text-sm sm:text-base text-slate-300 line-clamp-3 leading-relaxed">
+            When humanity's time draws to an end, a courageous vanguard voyages across the cosmic horizons into an uncharted wormhole to safeguard our species' destiny. An awe-inspiring sonic journey mixed exclusively for IMAX.
+          </p>
+
+          <div class="pt-3 flex flex-wrap items-center gap-3">
+            <button 
+              onclick="startBookingFlow(movies[0])" 
+              class="px-7 py-3.5 rounded-xl font-display font-bold text-sm bg-gradient-to-r from-brand-amber to-amber-500 hover:from-amber-400 hover:to-amber-500 text-black shadow-glow-amber transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2"
+            >
+              <i data-lucide="ticket" class="w-4 h-4"></i> Book Tickets Now
+            </button>
+            <button 
+              onclick="openTrailerModal('Interstellar Odyssey: Beyond Time')"
+              class="px-5 py-3.5 rounded-xl font-medium text-sm bg-slate-800/80 hover:bg-slate-700/90 text-white backdrop-blur border border-slate-700 transition flex items-center gap-2"
+            >
+              <i data-lucide="play" class="w-4 h-4 text-brand-amber"></i> Watch Trailer
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Movie Catalog Section -->
+  <main id="catalogSection" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+    
+    <!-- Filter Tabs & Stats -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-brand-border pb-6 mb-8">
+      <div>
+        <h2 class="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2.5">
+          <i data-lucide="film" class="w-6 h-6 text-brand-amber"></i>
+          Explore Showtimes
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">Select a film to reserve luxury recliner seats with instant confirmation</p>
+      </div>
+
+      <div class="flex items-center gap-2 p-1 bg-brand-card border border-brand-border rounded-xl">
+        <button 
+          id="tabNowShowing" 
+          onclick="setMovieTab('now-showing')" 
+          class="px-4 py-2 rounded-lg text-xs font-semibold bg-brand-amber text-black transition shadow"
+        >
+          Now Showing
+        </button>
+        <button 
+          id="tabComingSoon" 
+          onclick="setMovieTab('coming-soon')" 
+          class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition"
+        >
+          Coming Soon
+        </button>
+      </div>
+    </div>
+
+    <!-- Movie Grid Cards Container -->
+    <div id="movieGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Empty search result fallback -->
+    <div id="noMoviesFallback" class="hidden text-center py-16">
+      <i data-lucide="film-slash" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+      <h3 class="font-display font-semibold text-lg text-slate-300">No movies found</h3>
+      <p class="text-sm text-slate-500 mt-1">Try another title, genre, or change your selected city.</p>
+    </div>
+  </main>
+
+  <!-- Booking Flow Modal Overlay -->
+  <div id="bookingModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="relative w-full max-w-5xl bg-brand-card border border-brand-border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] my-auto">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-6 border-b border-brand-border/80 bg-brand-elevated/40 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-amber/10 border border-brand-amber/30 flex items-center justify-center text-brand-amber">
+            <i data-lucide="clapperboard" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="modalMovieTitle" class="font-display font-bold text-lg sm:text-xl text-white">Select Experience</h3>
+            <p id="modalMovieMeta" class="text-xs text-slate-400">Step 1 of 4 • Cinema & Showtime</p>
+          </div>
+        </div>
+
+        <button 
+          onclick="closeBookingModal()" 
+          class="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition"
+        >
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Step Indicator Tracker -->
+      <div class="grid grid-cols-4 bg-brand-dark border-b border-brand-border text-center text-xs font-medium">
+        <div id="stepTab1" class="py-2.5 px-1 border-b-2 border-brand-amber text-brand-amber flex items-center justify-center gap-1.5 font-semibold">
+          <span class="w-5 h-5 rounded-full bg-brand-amber text-black text-[11px] flex items-center justify-center font-bold">1</span>
+          <span class="hidden sm:inline">Time & Venue</span>
+        </div>
+        <div id="stepTab2" class="py-2.5 px-1 border-b-2 border-transparent text-slate-500 flex items-center justify-center gap-1.5 font-semibold">
+          <span class="w-5 h-5 rounded-full bg-slate-800 text-slate-400 text-[11px] flex items-center justify-center font-bold">2</span>
+          <span class="hidden sm:inline">Seats</span>
+        </div>
+        <div id="stepTab3" class="py-2.5 px-1 border-b-2 border-transparent text-slate-500 flex items-center justify-center gap-1.5 font-semibold">
+          <span class="w-5 h-5 rounded-full bg-slate-800 text-slate-400 text-[11px] flex items-center justify-center font-bold">3</span>
+          <span class="hidden sm:inline">Snacks</span>
+        </div>
+        <div id="stepTab4" class="py-2.5 px-1 border-b-2 border-transparent text-slate-500 flex items-center justify-center gap-1.5 font-semibold">
+          <span class="w-5 h-5 rounded-full bg-slate-800 text-slate-400 text-[11px] flex items-center justify-center font-bold">4</span>
+          <span class="hidden sm:inline">Checkout</span>
+        </div>
+      </div>
+
+      <!-- Modal Body Scrollable Steps Container -->
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1">
+        
+        <!-- ================= STEP 1: DATE, CINEMA & SHOWTIME ================= -->
+        <div id="stepContent1" class="space-y-6">
+          <!-- Date Pill Picker -->
+          <div>
+            <label class="block text-xs uppercase tracking-wider font-semibold text-slate-400 mb-3 flex items-center gap-2">
+              <i data-lucide="calendar" class="w-4 h-4 text-brand-amber"></i> Select Date
+            </label>
+            <div id="datePillsContainer" class="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none">
+              <!-- Dynamically populated dates -->
+            </div>
+          </div>
+
+          <!-- Cinema Venue & Format Selection -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">Cinema Location</label>
+              <select id="venueSelect" class="w-full bg-brand-elevated border border-brand-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-amber">
+                <option value="Grand Luxe Dolby Screening 1">CineVerse Downtown Grand Luxe (Screen 1)</option>
+                <option value="Skyline Laser IMAX Hall 4">CineVerse Skyline Laser IMAX (Hall 4)</option>
+                <option value="Galaxy VIP Lounge Screen">CineVerse Galaxy VIP Club Lounge</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">Projection Format</label>
+              <div class="grid grid-cols-3 gap-2" id="formatSelector">
+                <button type="button" onclick="selectFormat('IMAX 3D', 20)" class="format-btn active px-3 py-2 text-xs font-semibold rounded-xl border border-brand-amber bg-brand-amber/10 text-brand-amber">IMAX 3D</button>
+                <button type="button" onclick="selectFormat('Dolby Atmos', 18)" class="format-btn px-3 py-2 text-xs font-semibold rounded-xl border border-brand-border bg-brand-elevated text-slate-300">Dolby Atmos</button>
+                <button type="button" onclick="selectFormat('Standard 4K', 14)" class="format-btn px-3 py-2 text-xs font-semibold rounded-xl border border-brand-border bg-brand-elevated text-slate-300">Standard 4K</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Showtime Slots -->
+          <div>
+            <label class="block text-xs uppercase tracking-wider font-semibold text-slate-400 mb-3 flex items-center gap-2">
+              <i data-lucide="clock" class="w-4 h-4 text-brand-amber"></i> Available Showtimes
+            </label>
+            <div id="showtimeSlots" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <!-- Dynamically injected showtimes -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= STEP 2: INTERACTIVE SEAT MAP ================= -->
+        <div id="stepContent2" class="hidden space-y-6">
+          
+          <!-- Screen Visual Curve -->
+          <div class="flex flex-col items-center justify-center pt-2">
+            <div class="w-3/4 max-w-lg h-3 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full shadow-screen-glow neon-pulse"></div>
+            <p class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold mt-2.5 flex items-center gap-1.5">
+              <i data-lucide="monitor" class="w-3.5 h-3.5 text-brand-amber"></i> Curved Cinema Screen This Way
+            </p>
+          </div>
+
+          <!-- Seat Legend -->
+          <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 py-2 border-y border-brand-border/60 text-xs">
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-md bg-slate-700/80 border border-slate-600"></div>
+              <span class="text-slate-300">Available</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-md bg-brand-amber shadow-glow-amber border border-amber-300"></div>
+              <span class="text-brand-amber font-semibold">Selected</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-md bg-slate-900 border border-slate-800 opacity-40"></div>
+              <span class="text-slate-500">Sold / Reserved</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-md bg-purple-950 border border-purple-600 flex items-center justify-center text-[10px] text-purple-300">
+                <i data-lucide="sparkles" class="w-2.5 h-2.5"></i>
+              </div>
+              <span class="text-purple-300">VIP Recliner ($22)</span>
+            </div>
+          </div>
+
+          <!-- Seat Grid Container -->
+          <div class="overflow-x-auto pb-4 pt-1">
+            <div id="seatMapLayout" class="min-w-[580px] flex flex-col items-center gap-2.5">
+              <!-- Rendered via renderSeatMap() -->
+            </div>
+          </div>
+
+          <!-- Quick Selection Details Footer -->
+          <div class="bg-brand-elevated/70 border border-brand-border p-3.5 rounded-2xl flex items-center justify-between text-xs sm:text-sm">
+            <div>
+              <span class="text-slate-400">Selected Seats:</span>
+              <span id="selectedSeatsList" class="font-bold text-brand-amber ml-1.5">None</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Seats Subtotal:</span>
+              <span id="seatsSubtotalDisplay" class="font-bold text-white text-base ml-1.5">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= STEP 3: FOOD & BEVERAGE ADD-ONS ================= -->
+        <div id="stepContent3" class="hidden space-y-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-display font-semibold text-white">Artisan Concessions & Bites</h4>
+              <p class="text-xs text-slate-400">Pre-order freshly made snacks to be delivered right to your luxury seat</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded bg-brand-amber/15 text-brand-amber border border-brand-amber/30">Delivered to Seat</span>
+          </div>
+
+          <div id="concessionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Populated via Javascript -->
+          </div>
+        </div>
+
+        <!-- ================= STEP 4: ORDER SUMMARY & CHECKOUT ================= -->
+        <div id="stepContent4" class="hidden space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Summary Card -->
+            <div class="lg:col-span-2 bg-brand-elevated/70 border border-brand-border rounded-2xl p-5 space-y-4">
+              <h4 class="font-display font-bold text-base text-white border-b border-brand-border/60 pb-3 flex items-center gap-2">
+                <i data-lucide="receipt" class="w-4 h-4 text-brand-amber"></i> Reservation Summary
+              </h4>
+
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center pb-2 border-b border-brand-border/40">
+                  <span class="text-slate-400">Movie & Venue</span>
+                  <span id="summaryMovie" class="font-medium text-white text-right">-</span>
+                </div>
+                <div class="flex justify-between items-center pb-2 border-b border-brand-border/40">
+                  <span class="text-slate-400">Time & Projection</span>
+                  <span id="summarySchedule" class="font-medium text-white text-right">-</span>
+                </div>
+                <div class="flex justify-between items-center pb-2 border-b border-brand-border/40">
+                  <span class="text-slate-400">Allocated Seats</span>
+                  <span id="summarySeats" class="font-medium text-brand-amber text-right">-</span>
+                </div>
+                <div class="flex justify-between items-center pb-2 border-b border-brand-border/40">
+                  <span class="text-slate-400">Snacks & Concessions</span>
+                  <span id="summarySnacks" class="font-medium text-slate-300 text-right">-</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Convenience & Booking Fee</span>
+                  <span class="text-slate-300">$2.50</span>
+                </div>
+              </div>
+
+              <!-- Promo Code Input -->
+              <div class="pt-3 border-t border-brand-border/70">
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5">Have a discount voucher or gift card?</label>
+                <div class="flex gap-2">
+                  <input 
+                    type="text" 
+                    id="promoCodeInput" 
+                    placeholder="Enter 'CINEMA20' for 20% off" 
+                    class="flex-1 px-3 py-2 text-xs uppercase tracking-wider bg-brand-dark border border-brand-border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-amber"
+                  />
+                  <button 
+                    onclick="applyPromoCode()" 
+                    class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition"
+                  >
+                    Apply
+                  </button>
+                </div>
+                <p id="promoMessage" class="text-xs mt-1.5 hidden"></p>
+              </div>
+            </div>
+
+            <!-- Payment Breakdown Column -->
+            <div class="bg-gradient-to-b from-brand-elevated to-brand-card border border-brand-border rounded-2xl p-5 flex flex-col justify-between space-y-4">
+              <div class="space-y-3">
+                <h4 class="font-display font-bold text-white text-base">Payment Details</h4>
+                <div class="flex justify-between text-xs text-slate-400">
+                  <span>Tickets Subtotal</span>
+                  <span id="checkoutTicketsSubtotal">$0.00</span>
+                </div>
+                <div class="flex justify-between text-xs text-slate-400">
+                  <span>Snacks Subtotal</span>
+                  <span id="checkoutSnacksSubtotal">$0.00</span>
+                </div>
+                <div class="flex justify-between text-xs text-slate-400">
+                  <span>Service & Tax</span>
+                  <span id="checkoutTaxes">$2.50</span>
+                </div>
+                <div id="discountRow" class="hidden flex justify-between text-xs text-emerald-400 font-semibold">
+                  <span>Voucher Discount (20%)</span>
+                  <span id="checkoutDiscount">-$0.00</span>
+                </div>
+                <div class="border-t border-brand-border pt-3 flex justify-between items-baseline">
+                  <span class="font-bold text-slate-200">Total Due</span>
+                  <span id="checkoutGrandTotal" class="font-display font-extrabold text-2xl text-brand-amber">$0.00</span>
+                </div>
+              </div>
+
+              <!-- Mock payment selector -->
+              <div class="space-y-2 pt-2">
+                <div class="flex items-center gap-2 p-2.5 rounded-xl border border-brand-amber/40 bg-brand-amber/5 text-xs">
+                  <i data-lucide="credit-card" class="w-4 h-4 text-brand-amber"></i>
+                  <span class="text-white font-medium">Apple Pay / Visa •••• 9012</span>
+                  <span class="ml-auto text-[10px] text-brand-amber uppercase font-bold">Default</span>
+                </div>
+                <p class="text-[11px] text-slate-500 text-center">Encrypted 256-bit instant theater ticket issuance</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Action Navigation Footer -->
+      <div class="p-4 sm:p-6 border-t border-brand-border bg-brand-elevated/60 flex items-center justify-between">
+        <button 
+          id="prevStepBtn" 
+          onclick="navigateStep(-1)" 
+          class="hidden px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5"
+        >
+          <i data-lucide="chevron-left" class="w-4 h-4"></i> Back
+        </button>
+        <div id="stepSpacer" class="flex-1"></div>
+
+        <button 
+          id="nextStepBtn" 
+          onclick="navigateStep(1)" 
+          class="px-6 py-2.5 rounded-xl font-display font-bold text-xs bg-gradient-to-r from-brand-amber to-amber-500 hover:from-amber-400 hover:to-amber-500 text-black shadow-glow-amber transition flex items-center gap-1.5"
+        >
+          <span>Continue to Seats</span>
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Confirmed E-Ticket Boarding Pass Modal -->
+  <div id="ticketModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="relative w-full max-w-md bg-brand-card border border-brand-border rounded-3xl shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in duration-300">
+      
+      <!-- Top banner with glow -->
+      <div class="bg-gradient-to-r from-amber-500 via-brand-amber to-purple-600 p-4 text-center text-black">
+        <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black/20 mb-1">
+          <i data-lucide="check" class="w-6 h-6 text-black stroke-[3]"></i>
+        </div>
+        <h3 class="font-display font-black text-lg uppercase tracking-wider">Booking Confirmed!</h3>
+        <p class="text-xs text-black/80 font-medium">Your seat has been reserved at CineVerse</p>
+      </div>
+
+      <!-- Ticket Card Body with perforated cuts -->
+      <div class="p-6 space-y-4 ticket-rip-left ticket-rip-right relative">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-brand-amber tracking-wider bg-brand-amber/10 px-2 py-0.5 rounded border border-brand-amber/30" id="passFormat">IMAX 3D</span>
+            <h2 id="passMovieTitle" class="font-display font-extrabold text-xl text-white mt-1">Interstellar Odyssey</h2>
+            <p id="passCinemaVenue" class="text-xs text-slate-400 mt-0.5">Skyline Laser IMAX • Hall 4</p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] uppercase text-slate-500 block">Booking Ref</span>
+            <span id="passBookingRef" class="font-mono text-xs font-bold text-purple-400">#CV-89240</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 py-3 border-y border-dashed border-brand-border text-center">
+          <div class="p-2 rounded-xl bg-brand-elevated">
+            <span class="text-[10px] text-slate-400 uppercase block">Date</span>
+            <span id="passDate" class="text-xs font-bold text-white">Thu, Oct 24</span>
+          </div>
+          <div class="p-2 rounded-xl bg-brand-elevated">
+            <span class="text-[10px] text-slate-400 uppercase block">Time</span>
+            <span id="passTime" class="text-xs font-bold text-brand-amber">07:30 PM</span>
+          </div>
+          <div class="p-2 rounded-xl bg-brand-elevated">
+            <span class="text-[10px] text-slate-400 uppercase block">Seats</span>
+            <span id="passSeats" class="text-xs font-bold text-purple-300">E5, E6</span>
+          </div>
+        </div>
+
+        <div id="passSnacksSummary" class="text-xs text-slate-300 bg-brand-elevated/40 p-2.5 rounded-xl">
+          <span class="text-slate-500">Concessions: </span> <span id="passSnackText">No add-ons</span>
+        </div>
+
+        <!-- Simulated Barcode & QR code -->
+        <div class="pt-2 flex flex-col items-center justify-center">
+          <!-- Stylized Barcode SVG -->
+          <div class="w-full h-12 bg-white rounded-lg p-2 flex items-center justify-around">
+            <div class="h-full w-1 bg-black"></div>
+            <div class="h-full w-2 bg-black"></div>
+            <div class="h-full w-0.5 bg-black"></div>
+            <div class="h-full w-3 bg-black"></div>
+            <div class="h-full w-1 bg-black"></div>
+            <div class="h-full w-0.5 bg-black"></div>
+            <div class="h-full w-2 bg-black"></div>
+            <div class="h-full w-1.5 bg-black"></div>
+            <div class="h-full w-0.5 bg-black"></div>
+            <div class="h-full w-3 bg-black"></div>
+            <div class="h-full w-1 bg-black"></div>
+            <div class="h-full w-2 bg-black"></div>
+            <div class="h-full w-0.5 bg-black"></div>
+          </div>
+          <p class="font-mono text-[10px] text-slate-400 mt-1">SCAN AT ENTRY GATE • DO NOT SHARE</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons on Ticket -->
+      <div class="p-4 bg-brand-elevated/70 border-t border-brand-border flex gap-2">
+        <button 
+          onclick="printTicketReceipt()" 
+          class="flex-1 py-2.5 bg-brand-amber text-black font-bold text-xs rounded-xl hover:bg-amber-400 transition flex items-center justify-center gap-1.5"
+        >
+          <i data-lucide="download" class="w-4 h-4"></i> Save / Print
+        </button>
+        <button 
+          onclick="closeTicketModal()" 
+          class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl transition"
+        >
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Ticket History Drawer -->
+  <div id="ticketsDrawer" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex justify-end transition-opacity">
+    <div class="w-full max-w-md bg-brand-card h-full border-l border-brand-border p-6 flex flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center justify-between pb-4 border-b border-brand-border">
+          <div class="flex items-center gap-2">
+            <i data-lucide="ticket" class="w-5 h-5 text-brand-amber"></i>
+            <h3 class="font-display font-bold text-lg text-white">Your Bookings</h3>
+          </div>
+          <button onclick="toggleTicketsDrawer(false)" class="p-1 rounded-lg text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div id="userTicketsList" class="mt-4 space-y-3">
+          <p class="text-xs text-slate-400 text-center py-8">No tickets booked yet. Choose a film to start your CineVerse experience!</p>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-brand-border text-center">
+        <p class="text-[11px] text-slate-500">Need support with a reservation? Contact concierge@cineverse.io</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trailer Modal Simulator -->
+  <div id="trailerModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="relative w-full max-w-3xl bg-brand-card border border-brand-border rounded-3xl overflow-hidden shadow-2xl">
+      <div class="p-4 border-b border-brand-border flex items-center justify-between">
+        <h4 id="trailerTitle" class="font-display font-bold text-white text-sm">Movie Trailer</h4>
+        <button onclick="closeTrailerModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <!-- Simulated Player -->
+      <div class="relative aspect-video bg-black flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-16 h-16 rounded-full bg-brand-amber/20 border border-brand-amber flex items-center justify-center text-brand-amber animate-pulse mb-3">
+          <i data-lucide="play" class="w-8 h-8 fill-brand-amber ml-1"></i>
+        </div>
+        <h5 class="text-base font-bold text-white">4K Official IMAX Teaser</h5>
+        <p class="text-xs text-slate-400 max-w-md mt-1">High-fidelity Dolby Atmos audio stream simulation loaded.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    const state = {
+      currentTab: 'now-showing',
+      activeStep: 1,
+      selectedMovie: null,
+      selectedDate: null,
+      selectedVenue: 'CineVerse Downtown Grand Luxe (Screen 1)',
+      selectedFormat: 'IMAX 3D',
+      formatPrice: 20,
+      selectedTime: '07:30 PM',
+      selectedSeats: [], // Array of objects: { id: 'D5', category: 'vip', price: 22 }
+      selectedSnacks: {}, // { snackId: quantity }
+      promoApplied: false,
+      discountAmount: 0,
+      userPurchases: []
+    };
+
+    // Realistic Movies Dataset
+    const movies = [
+      {
+        id: 'mv-1',
+        title: 'Interstellar Odyssey: Beyond Time',
+        tagline: 'The end of Earth will not be the end of us.',
+        genre: 'Sci-Fi / Drama',
+        rating: 8.9,
+        duration: '2h 46m',
+        ageRating: 'PG-13',
+        status: 'now-showing',
+        poster: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=600&auto=format&fit=crop&q=80',
+        backdrop: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop&q=80',
+        synopsis: 'A courageous vanguard voyages across cosmic horizons into an uncharted wormhole to safeguard our species destiny.',
+        formats: ['IMAX 3D', 'Dolby Cinema', 'Standard 4K']
+      },
+      {
+        id: 'mv-2',
+        title: 'Neon Cyberpunk: 2099',
+        tagline: 'Memories can be bought, but souls cannot.',
+        genre: 'Action / Cyberpunk',
+        rating: 8.4,
+        duration: '2h 18m',
+        ageRating: 'R',
+        status: 'now-showing',
+        poster: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
+        backdrop: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&auto=format&fit=crop&q=80',
+        synopsis: 'In a rain-drenched megacity, a synthetic detective uncovers an existential corporate conspiracy that questions consciousness.',
+        formats: ['Dolby Cinema', 'IMAX 3D']
+      },
+      {
+        id: 'mv-3',
+        title: 'The Shadow of Dunharrow',
+        tagline: 'An ancient kingdom awaken from eternal frost.',
+        genre: 'Fantasy / Adventure',
+        rating: 8.7,
+        duration: '3h 05m',
+        ageRating: 'PG-13',
+        status: 'now-showing',
+        poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+        backdrop: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1600&auto=format&fit=crop&q=80',
+        synopsis: 'Mythic legions assemble on the glaciers to defend their realm against a dark dynasty re-emerging after two millennia.',
+        formats: ['IMAX 3D', 'Standard 4K']
+      },
+      {
+        id: 'mv-4',
+        title: 'Quantum Velocity',
+        tagline: 'Break the speed of sound and light.',
+        genre: 'Action / Thriller',
+        rating: 7.8,
+        duration: '1h 55m',
+        ageRating: 'PG-13',
+        status: 'now-showing',
+        poster: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&auto=format&fit=crop&q=80',
+        backdrop: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=1600&auto=format&fit=crop&q=80',
+        synopsis: 'An experimental pilot enters high-velocity suborbital flight, triggering time distortion cascades across global capitals.',
+        formats: ['Dolby Cinema', 'Standard 4K']
+      },
+      {
+        id: 'mv-5',
+        title: 'Echoes of the Deep Abyss',
+        tagline: 'They thought the ocean floor was quiet.',
+        genre: 'Thriller / Mystery',
+        rating: 8.1,
+        duration: '2h 10m',
+        ageRating: 'PG-13',
+        status: 'coming-soon',
+        poster: 'https://images.unsplash.com/photo-1682687220063-4742bd7fd538?w=600&auto=format&fit=crop&q=80',
+        backdrop: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1600&auto=format&fit=crop&q=80',
+        synopsis: 'Deep sea explorers inside the Mariana Trench discover acoustic pulses indicating an intelligent terrestrial precursor species.',
+        formats: ['IMAX 3D', 'Standard 4K']
+      },
+      {
+        id: 'mv-6',
+        title: 'The Alchemist of Prague',
+        tagline: 'Gold is trivial compared to eternity.',
+        genre: 'Historical / Mystery',
+        rating: 8.3,
+        duration: '2h 22m',
+        ageRating: 'PG-13',
+        status: 'coming-soon',
+        poster: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=600&auto=format&fit=crop&q=80',
+        backdrop: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=1600&auto=format&fit=crop&q=80',
+        synopsis: 'During the Bohemian Renaissance, a secretive scholar crafts a celestial clock capable of predicting pivotal destiny points.',
+        formats: ['Dolby Cinema']
+      }
+    ];
+
+    // Concessions Menu
+    const snacksData = [
+      { id: 'popcorn-luxe', name: 'Caramel & Butter Truffle Popcorn', desc: 'Warm artisanal corn with sea-salt butter drizzle', price: 9.50, icon: 'popcorn' },
+      { id: 'nachos-deluxe', name: 'Artisan Loaded Nachos', desc: 'Warm tortilla crisps, queso cheese, jalapeños & salsa', price: 8.50, icon: 'utensils' },
+      { id: 'soda-fountain', name: 'Craft Fountain Elixir (Large)', desc: 'Choice of Berry Vanilla, Blood Orange or Classic Cola', price: 6.00, icon: 'cup-soda' },
+      { id: 'candy-bites', name: 'Dark Chocolate Hazelnut Clusters', desc: 'Handcrafted bite-sized cinema sweets', price: 5.50, icon: 'candy' }
+    ];
+
+    // Web Audio FX for interactive feedback
+    let audioCtx = null;
+    function playAudioTone(freq, type = 'sine', duration = 0.08) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {
+        // Fallback gracefully if blocked by autoplay policies
+      }
+    }
+
+    function soundSeatToggle() { playAudioTone(680, 'sine', 0.06); }
+    function soundButtonClick() { playAudioTone(440, 'triangle', 0.08); }
+    function soundSuccess() {
+      setTimeout(() => playAudioTone(523.25, 'sine', 0.1), 0);
+      setTimeout(() => playAudioTone(659.25, 'sine', 0.1), 100);
+      setTimeout(() => playAudioTone(783.99, 'sine', 0.2), 200);
+    }
+
+    function renderMovieCatalog(filteredList = null) {
+      const container = document.getElementById('movieGrid');
+      const fallback = document.getElementById('noMoviesFallback');
+      const list = filteredList || movies.filter(m => m.status === state.currentTab);
+      
+      container.innerHTML = '';
+      if (list.length === 0) {
+        fallback.classList.remove('hidden');
+        return;
+      }
+      fallback.classList.add('hidden');
+
+      list.forEach(movie => {
+        const card = document.createElement('div');
+        card.className = "group relative rounded-2xl bg-brand-card border border-brand-border/80 hover:border-brand-amber/50 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-amber-500/10";
+        
+        card.innerHTML = `
+          <!-- Poster Preview -->
+          <div class="relative aspect-[2/3] overflow-hidden bg-slate-900">
+            <img 
+              src="${movie.poster}" 
+              alt="${movie.title}" 
+              class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+              loading="lazy"
+              onerror="this.src='https://placehold.co/400x600/12121c/e2e8f0?text=${encodeURIComponent(movie.title)}'"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-transparent to-transparent opacity-80"></div>
+            
+            <!-- Rating badge -->
+            <div class="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 flex items-center gap-1 text-xs font-bold text-white">
+              <i data-lucide="star" class="w-3.5 h-3.5 text-brand-amber fill-brand-amber"></i>
+              ${movie.rating}
+            </div>
+
+            <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded text-[11px] font-bold text-slate-300 border border-white/10">
+              ${movie.ageRating}
+            </div>
+          </div>
+
+          <!-- Meta Description -->
+          <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                <span>${movie.genre}</span>
+                <span>${movie.duration}</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-brand-amber transition line-clamp-1">
+                ${movie.title}
+              </h3>
+              <p class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                ${movie.synopsis}
+              </p>
+            </div>
+
+            <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between gap-2">
+              <button 
+                onclick="openTrailerModal('${movie.title}')"
+                class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition text-xs flex items-center gap-1"
+                title="Watch Trailer"
+              >
+                <i data-lucide="play-circle" class="w-4 h-4"></i>
+              </button>
+              <button 
+                onclick="startBookingFlow(movies.find(m => m.id === '${movie.id}'))" 
+                class="flex-1 py-2.5 px-3 rounded-xl font-display font-bold text-xs bg-brand-elevated hover:bg-brand-amber hover:text-black text-white border border-brand-border hover:border-transparent transition-all shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <i data-lucide="ticket" class="w-3.5 h-3.5"></i>
+                <span>${movie.status === 'coming-soon' ? 'Pre-Book' : 'Book Seats'}</span>
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function setMovieTab(tab) {
+      state.currentTab = tab;
+      const btnNow = document.getElementById('tabNowShowing');
+      const btnSoon = document.getElementById('tabComingSoon');
+      
+      if (tab === 'now-showing') {
+        btnNow.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-brand-amber text-black transition shadow";
+        btnSoon.className = "px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
+      } else {
+        btnSoon.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-brand-amber text-black transition shadow";
+        btnNow.className = "px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
+      }
+      renderMovieCatalog();
+    }
+
+    function filterMovies() {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const matched = movies.filter(m => 
+        m.title.toLowerCase().includes(q) ||
+        m.genre.toLowerCase().includes(q) ||
+        m.synopsis.toLowerCase().includes(q)
+      );
+      renderMovieCatalog(matched);
+    }
+
+    function initDatePills() {
+      const container = document.getElementById('datePillsContainer');
+      container.innerHTML = '';
+      
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      const today = new Date();
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() + i);
+        
+        const dayName = i === 0 ? 'Today' : days[d.getDay()];
+        const dateNum = d.getDate();
+        const monthName = months[d.getMonth()];
+        const dateString = `${dayName}, ${monthName} ${dateNum}`;
+
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = `date-pill flex-shrink-0 px-4 py-2.5 rounded-2xl border text-center transition ${i === 0 ? 'border-brand-amber bg-brand-amber/15 text-brand-amber font-bold' : 'border-brand-border bg-brand-elevated text-slate-400 hover:text-white hover:border-slate-600'}`;
+        pill.innerHTML = `
+          <span class="block text-[10px] uppercase font-semibold">${dayName}</span>
+          <span class="block text-base font-extrabold text-white mt-0.5">${dateNum}</span>
+          <span class="block text-[10px] text-slate-400">${monthName}</span>
+        `;
+        pill.onclick = () => {
+          document.querySelectorAll('.date-pill').forEach(el => {
+            el.className = 'date-pill flex-shrink-0 px-4 py-2.5 rounded-2xl border text-center transition border-brand-border bg-brand-elevated text-slate-400 hover:text-white hover:border-slate-600';
+          });
+          pill.className = 'date-pill flex-shrink-0 px-4 py-2.5 rounded-2xl border text-center transition border-brand-amber bg-brand-amber/15 text-brand-amber font-bold';
+          state.selectedDate = dateString;
+          soundButtonClick();
+        };
+
+        if (i === 0) state.selectedDate = dateString;
+        container.appendChild(pill);
+      }
+    }
+
+    function initShowtimes() {
+      const container = document.getElementById('showtimeSlots');
+      container.innerHTML = '';
+      const slots = [
+        { time: '11:00 AM', tag: 'Morning Matinee', price: 14 },
+        { time: '02:30 PM', tag: 'Afternoon Prime', price: 16 },
+        { time: '07:30 PM', tag: 'Laser Premiere', price: 20 },
+        { time: '10:45 PM', tag: 'Late Night Dolby', price: 18 }
+      ];
+
+      slots.forEach((slot, index) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `slot-btn text-left p-3 rounded-2xl border transition ${index === 2 ? 'border-brand-amber bg-brand-amber/10 ring-1 ring-brand-amber' : 'border-brand-border bg-brand-elevated hover:border-slate-600'}`;
+        btn.innerHTML = `
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-display font-extrabold text-base text-white">${slot.time}</span>
+            <span class="text-[10px] font-bold text-brand-amber bg-brand-amber/20 px-1.5 py-0.5 rounded">$${slot.price}</span>
+          </div>
+          <span class="text-[11px] text-slate-400 block">${slot.tag}</span>
+        `;
+        btn.onclick = () => {
+          document.querySelectorAll('.slot-btn').forEach(el => {
+            el.className = 'slot-btn text-left p-3 rounded-2xl border border-brand-border bg-brand-elevated hover:border-slate-600 transition';
+          });
+          btn.className = 'slot-btn text-left p-3 rounded-2xl border border-brand-amber bg-brand-amber/10 ring-1 ring-brand-amber transition';
+          state.selectedTime = slot.time;
+          soundButtonClick();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function selectFormat(name, basePrice) {
+      state.selectedFormat = name;
+      state.formatPrice = basePrice;
+      document.querySelectorAll('.format-btn').forEach(b => {
+        if (b.innerText.includes(name)) {
+          b.className = 'format-btn active px-3 py-2 text-xs font-semibold rounded-xl border border-brand-amber bg-brand-amber/10 text-brand-amber';
+        } else {
+          b.className = 'format-btn px-3 py-2 text-xs font-semibold rounded-xl border border-brand-border bg-brand-elevated text-slate-300';
+        }
+      });
+      soundButtonClick();
+      updateSeatsSubtotal();
+    }
+
+    const seatRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    const seatCols = 12;
+    // Deterministic mock sold seats
+    const soldSeats = new Set(['B3', 'B4', 'D6', 'D7', 'E8', 'E9', 'F1', 'F2', 'H6', 'H7']);
+
+    function renderSeatMap() {
+      const container = document.getElementById('seatMapLayout');
+      container.innerHTML = '';
+
+      seatRows.forEach((rowLetter, rIndex) => {
+        const rowWrapper = document.createElement('div');
+        rowWrapper.className = 'flex items-center gap-2 sm:gap-2.5';
+
+        // Row label
+        const label = document.createElement('span');
+        label.className = 'w-5 text-[11px] font-bold text-slate-500 text-center';
+        label.innerText = rowLetter;
+        rowWrapper.appendChild(label);
+
+        // Tier classification: Rows G, H = VIP Recliner, Rows D-F = Premium, A-C = Standard
+        let tier = 'Standard';
+        let tierPrice = 12;
+        if (['G', 'H'].includes(rowLetter)) {
+          tier = 'VIP';
+          tierPrice = 22;
+        } else if (['D', 'E', 'F'].includes(rowLetter)) {
+          tier = 'Premium';
+          tierPrice = 16;
+        }
+
+        const seatsInner = document.createElement('div');
+        seatsInner.className = 'flex items-center gap-1.5 sm:gap-2';
+
+        for (let col = 1; col <= seatCols; col++) {
+          const seatId = `${rowLetter}${col}`;
+          const isSold = soldSeats.has(seatId);
+          const isSelected = state.selectedSeats.some(s => s.id === seatId);
+
+          // Add aisle gap after seat 3 and seat 9
+          if (col === 4 || col === 10) {
+            const aisleGap = document.createElement('div');
+            aisleGap.className = 'w-3 sm:w-4';
+            seatsInner.appendChild(aisleGap);
+          }
+
+          const seatBtn = document.createElement('button');
+          seatBtn.type = 'button';
+          seatBtn.dataset.seatId = seatId;
+          seatBtn.dataset.price = tierPrice;
+          seatBtn.dataset.tier = tier;
+
+          let baseClasses = "w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-[10px] font-mono flex items-center justify-center transition transform active:scale-90 ";
+          
+          if (isSold) {
+            seatBtn.disabled = true;
+            seatBtn.className = baseClasses + "bg-slate-900 border border-slate-800 text-slate-700 cursor-not-allowed";
+            seatBtn.innerHTML = `✕`;
+          } else if (isSelected) {
+            seatBtn.className = baseClasses + "bg-brand-amber text-black font-extrabold shadow-glow-amber border border-amber-300 scale-105";
+            seatBtn.innerHTML = seatId;
+          } else {
+            if (tier === 'VIP') {
+              seatBtn.className = baseClasses + "bg-purple-950/70 border border-purple-800/80 text-purple-300 hover:border-purple-400 hover:bg-purple-900";
+            } else if (tier === 'Premium') {
+              seatBtn.className = baseClasses + "bg-slate-800 border border-slate-700 text-slate-200 hover:border-brand-amber hover:text-white";
+            } else {
+              seatBtn.className = baseClasses + "bg-slate-800/70 border border-slate-700/60 text-slate-400 hover:border-slate-500 hover:text-white";
+            }
+            seatBtn.innerHTML = col;
+          }
+
+          seatBtn.onclick = () => toggleSeat(seatId, tier, tierPrice);
+          seatsInner.appendChild(seatBtn);
+        }
+
+        rowWrapper.appendChild(seatsInner);
+        
+        // Right side row label
+        const labelRight = document.createElement('span');
+        labelRight.className = 'w-5 text-[11px] font-bold text-slate-500 text-center';
+        labelRight.innerText = rowLetter;
+        rowWrapper.appendChild(labelRight);
+
+        container.appendChild(rowWrapper);
+      });
+    }
+
+    function toggleSeat(seatId, tier, price) {
+      soundSeatToggle();
+      const existingIdx = state.selectedSeats.findIndex(s => s.id === seatId);
+      if (existingIdx > -1) {
+        state.selectedSeats.splice(existingIdx, 1);
+      } else {
+        if (state.selectedSeats.length >= 8) {
+          showToast('Maximum 8 seats per booking transaction allowed.');
+          return;
+        }
+        state.selectedSeats.push({ id: seatId, tier, price });
+      }
+      renderSeatMap();
+      updateSeatsSubtotal();
+    }
+
+    function updateSeatsSubtotal() {
+      const seatsListEl = document.getElementById('selectedSeatsList');
+      const seatsSubtotalEl = document.getElementById('seatsSubtotalDisplay');
+      
+      if (state.selectedSeats.length === 0) {
+        seatsListEl.innerText = 'None';
+        seatsSubtotalEl.innerText = '$0.00';
+      } else {
+        seatsListEl.innerText = state.selectedSeats.map(s => s.id).join(', ');
+        const total = state.selectedSeats.reduce((sum, s) => sum + s.price, 0);
+        seatsSubtotalEl.innerText = `$${total.toFixed(2)}`;
+      }
+    }
+
+    function renderConcessions() {
+      const container = document.getElementById('concessionsGrid');
+      container.innerHTML = '';
+
+      snacksData.forEach(snack => {
+        const qty = state.selectedSnacks[snack.id] || 0;
+        const card = document.createElement('div');
+        card.className = "flex items-center justify-between p-3.5 rounded-2xl bg-brand-elevated border border-brand-border/80 hover:border-slate-700 transition";
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-brand-dark/80 border border-brand-border flex items-center justify-center text-brand-amber">
+              <i data-lucide="${snack.icon}" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h5 class="font-display font-semibold text-sm text-white">${snack.name}</h5>
+              <p class="text-[11px] text-slate-400 line-clamp-1 max-w-[200px]">${snack.desc}</p>
+              <span class="text-xs font-bold text-brand-amber mt-0.5 inline-block">$${snack.price.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 bg-brand-dark border border-brand-border rounded-xl p-1">
+            <button 
+              type="button" 
+              onclick="updateSnackQty('${snack.id}', -1)"
+              class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition"
+            >
+              -
+            </button>
+            <span class="w-6 text-center text-xs font-bold text-white">${qty}</span>
+            <button 
+              type="button" 
+              onclick="updateSnackQty('${snack.id}', 1)"
+              class="w-7 h-7 rounded-lg bg-brand-amber hover:bg-amber-400 text-black font-bold flex items-center justify-center transition"
+            >
+              +
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function updateSnackQty(snackId, change) {
+      soundSeatToggle();
+      const current = state.selectedSnacks[snackId] || 0;
+      const updated = Math.max(0, current + change);
+      if (updated === 0) {
+        delete state.selectedSnacks[snackId];
+      } else {
+        state.selectedSnacks[snackId] = updated;
+      }
+      renderConcessions();
+    }
+
+    function navigateStep(direction) {
+      soundButtonClick();
+      const newStep = state.activeStep + direction;
+
+      // Validation
+      if (direction > 0) {
+        if (state.activeStep === 1) {
+          if (!state.selectedDate || !state.selectedTime) {
+            showToast('Please select an active date and showtime');
+            return;
+          }
+        }
+        if (state.activeStep === 2) {
+          if (state.selectedSeats.length === 0) {
+            showToast('Please select at least 1 seat to proceed');
+            return;
+          }
+        }
+      }
+
+      if (newStep < 1 || newStep > 4) return;
+      state.activeStep = newStep;
+      renderCurrentStep();
+    }
+
+    function renderCurrentStep() {
+      // Toggle tabs
+      for (let s = 1; s <= 4; s++) {
+        const content = document.getElementById(`stepContent${s}`);
+        const tab = document.getElementById(`stepTab${s}`);
+        
+        if (s === state.activeStep) {
+          content.classList.remove('hidden');
+          tab.className = 'py-2.5 px-1 border-b-2 border-brand-amber text-brand-amber flex items-center justify-center gap-1.5 font-semibold';
+          tab.querySelector('span:first-child').className = 'w-5 h-5 rounded-full bg-brand-amber text-black text-[11px] flex items-center justify-center font-bold';
+        } else {
+          content.classList.add('hidden');
+          const isPassed = s < state.activeStep;
+          tab.className = 'py-2.5 px-1 border-b-2 border-transparent text-slate-500 flex items-center justify-center gap-1.5 font-semibold';
+          tab.querySelector('span:first-child').className = `w-5 h-5 rounded-full ${isPassed ? 'bg-slate-700 text-slate-300' : 'bg-slate-800 text-slate-500'} text-[11px] flex items-center justify-center font-bold`;
+        }
+      }
+
+      // Step button label controls
+      const prevBtn = document.getElementById('prevStepBtn');
+      const nextBtn = document.getElementById('nextStepBtn');
+      const metaLabel = document.getElementById('modalMovieMeta');
+
+      if (state.activeStep === 1) {
+        prevBtn.classList.add('hidden');
+        nextBtn.innerHTML = '<span>Continue to Seats</span><i data-lucide="chevron-right" class="w-4 h-4"></i>';
+        metaLabel.innerText = 'Step 1 of 4 • Cinema & Showtime';
+      } else if (state.activeStep === 2) {
+        prevBtn.classList.remove('hidden');
+        nextBtn.innerHTML = '<span>Concessions & Snacks</span><i data-lucide="chevron-right" class="w-4 h-4"></i>';
+        metaLabel.innerText = 'Step 2 of 4 • Interactive Seat Selection';
+        renderSeatMap();
+      } else if (state.activeStep === 3) {
+        prevBtn.classList.remove('hidden');
+        nextBtn.innerHTML = '<span>Proceed to Checkout</span><i data-lucide="chevron-right" class="w-4 h-4"></i>';
+        metaLabel.innerText = 'Step 3 of 4 • Food & Beverage Add-ons';
+        renderConcessions();
+      } else if (state.activeStep === 4) {
+        prevBtn.classList.remove('hidden');
+        nextBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i><span>Authorize & Pay</span>';
+        metaLabel.innerText = 'Step 4 of 4 • Order Summary & Verification';
+        nextBtn.onclick = confirmBookingAndCheckout;
+        buildOrderSummary();
+      }
+
+      if (state.activeStep !== 4) {
+        nextBtn.onclick = () => navigateStep(1);
+      }
+
+      lucide.createIcons();
+    }
+
+    function buildOrderSummary() {
+      document.getElementById('summaryMovie').innerText = `${state.selectedMovie.title} (${state.selectedFormat})`;
+      document.getElementById('summarySchedule').innerText = `${state.selectedDate} @ ${state.selectedTime}`;
+      document.getElementById('summarySeats').innerText = state.selectedSeats.map(s => `${s.id} (${s.tier})`).join(', ');
+
+      const snackEntries = Object.entries(state.selectedSnacks);
+      if (snackEntries.length === 0) {
+        document.getElementById('summarySnacks').innerText = 'None';
+      } else {
+        const text = snackEntries.map(([id, qty]) => {
+          const item = snacksData.find(s => s.id === id);
+          return `${qty}x ${item.name}`;
+        }).join(', ');
+        document.getElementById('summarySnacks').innerText = text;
+      }
+
+      // Calculations
+      const ticketsTotal = state.selectedSeats.reduce((sum, s) => sum + s.price, 0);
+      const snacksTotal = snackEntries.reduce((sum, [id, qty]) => {
+        const item = snacksData.find(s => s.id === id);
+        return sum + (item.price * qty);
+      }, 0);
+      const taxes = 2.50;
+
+      let discount = 0;
+      if (state.promoApplied) {
+        discount = (ticketsTotal + snacksTotal) * 0.20;
+      }
+      state.discountAmount = discount;
+
+      const grandTotal = Math.max(0, (ticketsTotal + snacksTotal + taxes) - discount);
+
+      document.getElementById('checkoutTicketsSubtotal').innerText = `$${ticketsTotal.toFixed(2)}`;
+      document.getElementById('checkoutSnacksSubtotal').innerText = `$${snacksTotal.toFixed(2)}`;
+      document.getElementById('checkoutTaxes').innerText = `$${taxes.toFixed(2)}`;
+
+      const discountRow = document.getElementById('discountRow');
+      if (state.promoApplied) {
+        discountRow.classList.remove('hidden');
+        document.getElementById('checkoutDiscount').innerText = `-$${discount.toFixed(2)}`;
+      } else {
+        discountRow.classList.add('hidden');
+      }
+
+      document.getElementById('checkoutGrandTotal').innerText = `$${grandTotal.toFixed(2)}`;
+    }
+
+    function applyPromoCode() {
+      const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
+      const msg = document.getElementById('promoMessage');
+      soundButtonClick();
+
+      if (code === 'CINEMA20') {
+        state.promoApplied = true;
+        msg.innerText = '✓ Promo "CINEMA20" applied! 20% discount deducted.';
+        msg.className = 'text-xs mt-1.5 text-emerald-400 font-semibold block';
+        buildOrderSummary();
+      } else {
+        msg.innerText = 'Invalid voucher code. Try "CINEMA20" for demo discount.';
+        msg.className = 'text-xs mt-1.5 text-rose-400 font-medium block';
+      }
+    }
+
+    function confirmBookingAndCheckout() {
+      soundSuccess();
+
+      // Create booking record
+      const bookingRef = `#CV-${Math.floor(10000 + Math.random() * 90000)}`;
+      const reservation = {
+        ref: bookingRef,
+        movie: state.selectedMovie.title,
+        date: state.selectedDate,
+        time: state.selectedTime,
+        venue: document.getElementById('venueSelect').value,
+        format: state.selectedFormat,
+        seats: state.selectedSeats.map(s => s.id),
+        timestamp: new Date().toLocaleDateString()
+      };
+
+      state.userPurchases.unshift(reservation);
+      updateUserPurchasesDrawer();
+
+      // Close booking modal and open ticket modal
+      closeBookingModal();
+
+      document.getElementById('passMovieTitle').innerText = reservation.movie;
+      document.getElementById('passCinemaVenue').innerText = reservation.venue;
+      document.getElementById('passFormat').innerText = reservation.format;
+      document.getElementById('passBookingRef').innerText = reservation.ref;
+      document.getElementById('passDate').innerText = reservation.date;
+      document.getElementById('passTime').innerText = reservation.time;
+      document.getElementById('passSeats').innerText = reservation.seats.join(', ');
+
+      const snackItems = Object.entries(state.selectedSnacks);
+      if (snackItems.length > 0) {
+        const text = snackItems.map(([id, qty]) => {
+          const s = snacksData.find(x => x.id === id);
+          return `${qty}x ${s.name.split(' ')[0]}`;
+        }).join(', ');
+        document.getElementById('passSnackText').innerText = text;
+      } else {
+        document.getElementById('passSnackText').innerText = 'No Concessions added';
+      }
+
+      document.getElementById('ticketModal').classList.remove('hidden');
+    }
+
+    function printTicketReceipt() {
+      soundButtonClick();
+      window.print();
+    }
+
+    function closeTicketModal() {
+      document.getElementById('ticketModal').classList.add('hidden');
+    }
+
+    function updateUserPurchasesDrawer() {
+      const container = document.getElementById('userTicketsList');
+      const badge = document.getElementById('ticketBadge');
+      
+      if (state.userPurchases.length === 0) {
+        badge.classList.add('hidden');
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">No tickets booked yet. Choose a film to start your CineVerse experience!</p>`;
+        return;
+      }
+
+      badge.innerText = state.userPurchases.length;
+      badge.classList.remove('hidden');
+
+      container.innerHTML = '';
+      state.userPurchases.forEach(item => {
+        const div = document.createElement('div');
+        div.className = "p-3.5 rounded-2xl bg-brand-elevated border border-brand-border space-y-2";
+        div.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-brand-amber font-mono">${item.ref}</span>
+            <span class="text-[10px] text-slate-400">${item.timestamp}</span>
+          </div>
+          <h4 class="font-display font-bold text-sm text-white">${item.movie}</h4>
+          <div class="flex items-center justify-between text-xs text-slate-300">
+            <span>${item.date} • ${item.time}</span>
+            <span class="text-purple-300 font-semibold">${item.seats.join(', ')}</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleTicketsDrawer(open) {
+      soundButtonClick();
+      const drawer = document.getElementById('ticketsDrawer');
+      if (open) drawer.classList.remove('hidden');
+      else drawer.classList.add('hidden');
+    }
+
+    function startBookingFlow(movie) {
+      soundButtonClick();
+      state.selectedMovie = movie;
+      state.activeStep = 1;
+      state.selectedSeats = [];
+      state.selectedSnacks = {};
+      state.promoApplied = false;
+
+      document.getElementById('modalMovieTitle').innerText = movie.title;
+      document.getElementById('bookingModal').classList.remove('hidden');
+      
+      initDatePills();
+      initShowtimes();
+      renderCurrentStep();
+    }
+
+    function closeBookingModal() {
+      document.getElementById('bookingModal').classList.add('hidden');
+    }
+
+    function openTrailerModal(title) {
+      soundButtonClick();
+      document.getElementById('trailerTitle').innerText = `${title} - Official IMAX Trailer`;
+      document.getElementById('trailerModal').classList.remove('hidden');
+    }
+
+    function closeTrailerModal() {
+      document.getElementById('trailerModal').classList.add('hidden');
+    }
+
+    function scrollToCatalog() {
+      document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Interactive Toast Notification
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900 border border-brand-amber/50 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce';
+      toast.innerHTML = `<i data-lucide="info" class="w-4 h-4 text-brand-amber"></i><span>${message}</span>`;
+      document.body.appendChild(toast);
+      lucide.createIcons();
+      setTimeout(() => {
+        toast.remove();
+      }, 3200);
+    }
+
+    // Window load initializations
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      renderMovieCatalog();
+    });
+  </script>
+</body>
+</html>
